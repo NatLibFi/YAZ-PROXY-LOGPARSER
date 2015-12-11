@@ -1,0 +1,23 @@
+{
+    "type": "object",
+    "properties": {
+	"dateStart": {
+	    "type": "string",
+	    "format": "date-time"
+	},
+	"dateEnd": {
+	    "type": "string",
+	    "format": "date-time"
+	},
+	"skipFiles": {
+	    "type": "boolean",
+	    "default": false
+	},
+	"excludeIpAddresses": {
+	    "type": "array",
+	    "items": {
+		"type": "string"
+	    }
+	}
+    }
+}
