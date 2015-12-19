@@ -16,8 +16,13 @@ package YAZ::Proxy::LogParser;
 use v5.10;
 use strict;
 
+use File::ShareDir;
+use File::Spec;
+use File::Basename;
 use PerlIO::reverse;
 use DateTime::Format::HTTP;
+
+my $SCHEMA_FILENAME = File::ShareDir::dist_file('YAZ-Proxy-LogParser', 'yaz-proxy-logparser-configuration-schema.json');
 
 sub new
 {
@@ -27,16 +32,22 @@ sub new
 
     bless $self, $class;
 
-    #TODO: Validate config
-    $self->{config} = $config;
-    #TODO: Validate filters
+    $self->{config} = $config;    
     $self->{filters} = ref($filters) == 'ARRAY' ? $filters : @{$filters};
+
+    _validateConfiguration($self->{config});
+
+    for($self->{filters}) {
+	if (ref($_) != 'CODE') {
+	    die('Invalid filter found');
+	}
+    }
 
     if (defined($self->{config}->{dateStart})) {
 	$self->{config}->{dateStart} = DateTime::Format::HTTP->parse_datetime($self->{config}->{dateStart}, 'local')->epoch();
     }
     if (defined($self->{config}->{dateEnd})) {
-# Add one day to date so that comparison checks for the whole last day
+        # Add one day to date so that comparison checks for the whole last day
 	$self->{config}->{dateEnd} = DateTime::Format::HTTP->parse_datetime($self->{config}->{dateEnd}, 'local')->epoch() + 60 * 60 * 24;
     }
 
@@ -140,6 +151,61 @@ sub _getEntries
     }
 
 }
+
+sub _parseJson
+{
+
+    my $file, my $obj;
+    my $filename = shift;
+
+    if (!open($file, '<:utf8', $filename) && $!) {
+	die("Couldn't open " . $filename . ": " . $!);
+    } else {
+	eval {
+	    
+	    my $str;
+	    
+	    while(<$file>) {
+		$str .= $_;
+	    }
+	    close($file);
+	    
+	    $obj = JSON->new()->utf8()->allow_nonref()->decode($str);
+
+	};
+	if ($@) {
+	    die('Failed parsing JSON from ' . $filename . ': ' . $@);
+	}
+
+    }
+
+    return $obj;
+
+}
+
+sub _validateConfiguration
+{
+    
+    my $result;
+    my $schema = JSON::Schema->new(_parseJson($SCHEMA_FILENAME));
+    my $config = shift;
+
+    $result = $schema->validate($config);
+
+    if (!$result) {
+	
+	my $str_error = 'Validating configuration failed: ';
+
+	foreach($result->errors) {
+	    $str_error .= $_ . '\n';
+	}
+
+	die($str_error);
+
+    }
+
+}
+
 
 1;
 
