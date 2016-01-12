@@ -16,7 +16,28 @@
 	"excludeIpAddresses": {
 	    "type": "array",
 	    "items": {
-		"type": "string"
+		"anyOf": [
+		    {
+			"type": "string",
+			"format": "ipv4"
+		    },
+		    {
+			"type": "object",
+			"properties": {
+			    "name": {
+				"type": "string"
+			    },
+			    "description": {
+				"type": "string"
+			    },
+			    "address": {
+				"type": "string",
+				"format": "ipv4"
+			    }
+			},
+			"required": ["address"]
+		    }
+		]
 	    }
 	}
     }

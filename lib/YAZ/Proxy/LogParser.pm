@@ -96,9 +96,16 @@ sub parse
 		next;
 	    } elsif ($message =~ /^New session tcp:(?:::ffff:)?(.*)$/) {
 		
-		#TODO: Check if IP is to be excluded
 		$ip_current = $1;
-		    
+
+		
+		for my $ip_spec (@{$self->{config}->{excludeIpAddresses}}) {
+		    if ($ip_current == (ref($ip_spec) eq 'HASH' ? $ip_spec->{address} : $ip_spec)) {
+			$ip_current = undef;
+			last;
+		    }
+		}
+    
 	    } elsif ($ip_current && $message =~ /^Search/) {
 		
 		my $skip;
