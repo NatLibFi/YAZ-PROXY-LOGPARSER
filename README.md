@@ -1,3 +1,4 @@
+# Deprecated
 # YAZ Proxy log Parser
   
 Log parser for [Index Data's YAZ Proxy](http://www.indexdata.com/yazproxy).
